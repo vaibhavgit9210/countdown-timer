@@ -73,6 +73,9 @@
         footer a{ color:var(--accent2); text-decoration:none; }
         .reset{ background:none; border:1px solid var(--line); color:var(--dim); border-radius:8px; padding:5px 10px; font-size:.72rem; cursor:pointer; }
         .reset:hover{ color:var(--ink); border-color:var(--dim); }
+        .sync{ font-size:.7rem; letter-spacing:.06em; color:var(--dim); border:1px solid var(--line); border-radius:99px; padding:3px 10px; white-space:nowrap; }
+        .sync.ok{ color:var(--ok); border-color:rgba(74,222,128,.4); }
+        .sync.warn{ color:var(--gold); border-color:rgba(255,208,102,.4); }
 
         @media (max-width:560px){
             .day{ grid-template-columns:auto 1fr; }
@@ -98,6 +101,7 @@
     <!-- ===== 30-DAY SPRINT ===== -->
     <div class="sprint-head">
         <h2>🏗️ 30 Days · 30 Builds</h2>
+        <span class="sync" id="sync">syncing…</span>
     </div>
     <p class="sub">Two boxes a day, no exceptions: <b>ship a project</b> (hand-typed — no pasted code) and
        <b>brag in public</b> (a commit + one post on GitHub / blog / LinkedIn). Each build is a bite-sized rep from the
@@ -187,12 +191,43 @@ var WEEKS = [
 var BUILDS = [];
 WEEKS.forEach(function(w){ w.days.forEach(function(d){ BUILDS.push({week:w.title, title:d[0], why:d[1], cap:d[2]}); }); });
 
-/* ---------- 3. State (localStorage) ---------- */
+/* ---------- 3. State — Firebase Realtime DB sync (no SDK, plain fetch), localStorage fallback ---------- */
 var KEY = "sprint30.v1";
-function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
-function save(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
-var state = load();
-if (!state.start){ var t=new Date(); t.setHours(0,0,0,0); state.start = t.getTime(); state.checks = {}; save(state); }
+var DB  = "https://day30things-default-rtdb.firebaseio.com/sprint.json";
+function loadLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
+function saveLocal(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
+function setStatus(txt,cls){ var e=document.getElementById("sync"); if(e){ e.textContent=txt; e.className="sync "+(cls||""); } }
+
+var state = loadLocal();
+if (!state.start){ var t=new Date(); t.setHours(0,0,0,0); state.start = t.getTime(); }
+if (!state.checks) state.checks = {};
+
+// write: local immediately, then push the blob to the cloud (no Content-Type header → no CORS preflight)
+function save(s){
+    saveLocal(s);
+    setStatus("saving…","");
+    fetch(DB, { method:"PUT", body: JSON.stringify({ start:s.start, checks:s.checks }) })
+        .then(function(r){ if(!r.ok) throw 0; setStatus("✓ synced","ok"); })
+        .catch(function(){ setStatus("⚠ offline — saved on this device","warn"); });
+}
+
+// pull the cloud copy on load; if it exists it's the source of truth across devices
+setStatus("syncing…","");
+fetch(DB)
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(remote){
+        if (remote && remote.start){
+            state.start  = remote.start;
+            state.checks = remote.checks || {};
+            saveLocal(state);
+            render();
+            setStatus("✓ synced","ok");
+        } else {
+            save(state);   // cloud empty → seed it from this device
+            render();
+        }
+    })
+    .catch(function(){ setStatus("⚠ offline — using this device","warn"); });
 
 var DAY = 864e5;
 function todayIndex(){ return Math.floor((Date.now() - state.start) / DAY); }
