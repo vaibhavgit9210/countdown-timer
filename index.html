@@ -2,23 +2,260 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
-    <title>Countdown to 2024</title>
+    <title>Countdown to 2027 · 30-Day Build Sprint</title>
+    <style>
+        *{ box-sizing:border-box; margin:0; padding:0; }
+        :root{
+            --bg0:#0a0e1a; --bg1:#131a2e; --card:rgba(255,255,255,.045);
+            --line:rgba(255,255,255,.09); --ink:#e6e9f2; --dim:#8b93ab;
+            --accent:#38e1c8; --accent2:#7c9cff; --gold:#ffd066; --ok:#4ade80;
+        }
+        html,body{ min-height:100%; }
+        body{
+            font-family:'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif;
+            color:var(--ink); line-height:1.5;
+            background:
+                radial-gradient(1200px 600px at 80% -10%, rgba(124,156,255,.18), transparent 60%),
+                radial-gradient(900px 500px at 0% 10%, rgba(56,225,200,.13), transparent 55%),
+                linear-gradient(180deg,var(--bg1),var(--bg0));
+            background-attachment:fixed;
+            padding:clamp(20px,4vw,56px);
+        }
+        .wrap{ max-width:980px; margin:0 auto; }
+
+        /* ---------- countdown ---------- */
+        .hero{ text-align:center; margin-bottom:14px; }
+        .kicker{ letter-spacing:.28em; text-transform:uppercase; font-size:.72rem; color:var(--accent); font-weight:600; }
+        h1{ font-weight:700; font-size:clamp(1.9rem,6vw,3.2rem); letter-spacing:-.02em; margin:.15em 0 .1em; }
+        h1 span{ background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+        #countdown{ display:flex; gap:clamp(8px,2vw,20px); justify-content:center; flex-wrap:wrap; margin:22px 0 6px; }
+        #countdown .cell{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:clamp(12px,2.5vw,22px) clamp(14px,3vw,30px); min-width:84px; }
+        #countdown .num{ display:block; font-size:clamp(1.8rem,6vw,3rem); font-weight:700; font-variant-numeric:tabular-nums; }
+        #countdown .lbl{ font-size:.68rem; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+        .done-note{ font-size:1.1rem; color:var(--gold); }
+
+        /* ---------- sprint ---------- */
+        .sprint-head{ margin:44px 0 8px; display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+        .sprint-head h2{ font-size:clamp(1.25rem,3.5vw,1.7rem); font-weight:700; letter-spacing:-.01em; }
+        .sub{ color:var(--dim); font-size:.92rem; max-width:70ch; }
+        .stats{ display:flex; gap:10px; flex-wrap:wrap; margin:18px 0; }
+        .stat{ flex:1 1 120px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+        .stat b{ display:block; font-size:1.7rem; font-weight:700; font-variant-numeric:tabular-nums; }
+        .stat small{ color:var(--dim); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; }
+        .bar{ height:8px; border-radius:99px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:10px; }
+        .bar > i{ display:block; height:100%; width:0; border-radius:99px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .4s ease; }
+
+        .week{ margin-top:26px; }
+        .week h3{ font-size:.78rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent2); margin-bottom:10px; font-weight:600; }
+        .day{ display:grid; grid-template-columns:auto 1fr auto; gap:12px 14px; align-items:center;
+              background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:8px; }
+        .day.today{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset, 0 6px 30px rgba(56,225,200,.12); }
+        .day.done{ opacity:.62; }
+        .dnum{ font-variant-numeric:tabular-nums; text-align:center; }
+        .dnum b{ display:block; font-size:1.15rem; font-weight:700; }
+        .dnum small{ font-size:.62rem; color:var(--dim); letter-spacing:.08em; }
+        .dbody .t{ font-weight:600; }
+        .dbody .t .cap{ color:var(--gold); }
+        .dbody .why{ color:var(--dim); font-size:.82rem; }
+        .checks{ display:flex; gap:8px; }
+        .chk{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; user-select:none;
+              border:1px solid var(--line); border-radius:10px; padding:7px 11px; font-size:.8rem; color:var(--dim); white-space:nowrap; transition:.15s; }
+        .chk:hover{ border-color:var(--accent2); color:var(--ink); }
+        .chk input{ display:none; }
+        .chk .box{ width:15px; height:15px; border-radius:5px; border:1.5px solid var(--dim); display:inline-block; position:relative; flex:0 0 auto; }
+        .chk.on{ color:var(--ink); border-color:var(--ok); }
+        .chk.on .box{ background:var(--ok); border-color:var(--ok); }
+        .chk.on .box::after{ content:"✓"; position:absolute; inset:0; font-size:11px; line-height:15px; text-align:center; color:#04110a; font-weight:800; }
+        .todaytag{ display:inline-block; font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); border:1px solid var(--accent); border-radius:6px; padding:1px 6px; margin-left:8px; vertical-align:middle; }
+
+        footer{ margin-top:38px; text-align:center; color:var(--dim); font-size:.8rem; }
+        footer a{ color:var(--accent2); text-decoration:none; }
+        .reset{ background:none; border:1px solid var(--line); color:var(--dim); border-radius:8px; padding:5px 10px; font-size:.72rem; cursor:pointer; }
+        .reset:hover{ color:var(--ink); border-color:var(--dim); }
+
+        @media (max-width:560px){
+            .day{ grid-template-columns:auto 1fr; }
+            .checks{ grid-column:1 / -1; }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1 id="headline">Countdown to 2024</h1>
+<div class="wrap">
+
+    <!-- ===== COUNTDOWN ===== -->
+    <div class="hero">
+        <div class="kicker">The clock is running</div>
+        <h1>Countdown to <span>2027</span></h1>
         <div id="countdown">
-            <ul>
-                <li><span id="days"></span>Days</li>
-                <li><span id="hours"></span>Hours</li>
-                <li><span id="minutes"></span>Minutes</li>
-                <li><span id="seconds"></span>Seconds</li>
-            </ul>
+            <div class="cell"><span class="num" id="days">--</span><span class="lbl">Days</span></div>
+            <div class="cell"><span class="num" id="hours">--</span><span class="lbl">Hours</span></div>
+            <div class="cell"><span class="num" id="minutes">--</span><span class="lbl">Minutes</span></div>
+            <div class="cell"><span class="num" id="seconds">--</span><span class="lbl">Seconds</span></div>
         </div>
     </div>
+
+    <!-- ===== 30-DAY SPRINT ===== -->
+    <div class="sprint-head">
+        <h2>🏗️ 30 Days · 30 Builds</h2>
+    </div>
+    <p class="sub">Two boxes a day, no exceptions: <b>ship a project</b> (hand-typed — no pasted code) and
+       <b>brag in public</b> (a commit + one post on GitHub / blog / LinkedIn). Each build is a bite-sized rep from the
+       6-month plan — front-loading the two things that actually gate the jump: <b>a completion habit</b> and <b>public proof</b>.
+       The grader is binary: it shipped publicly, or it didn't.</p>
+
+    <div class="stats">
+        <div class="stat"><b id="s-days">0</b><small>Days fully done</small></div>
+        <div class="stat"><b id="s-streak">0</b><small>Current streak</small></div>
+        <div class="stat"><b id="s-proj">0</b><small>Projects shipped</small></div>
+        <div class="stat"><b id="s-brag">0</b><small>Brags posted</small>
+            <div class="bar"><i id="s-bar"></i></div>
+        </div>
+    </div>
+
+    <div id="sprint"></div>
+
+    <footer>
+        <p>Built for the 6-month plan · one block, one grader, one artifact at a time.</p>
+        <p style="margin-top:8px"><button class="reset" id="reset">Reset sprint (start over from today)</button></p>
+    </footer>
+</div>
+
+<script>
+/* ---------- 1. Countdown to Jan 1, 2027 ---------- */
+(function(){
+    var target = new Date("Jan 1, 2027 00:00:00").getTime();
+    var day=864e5, hour=36e5, min=6e4, sec=1e3;
+    function tick(){
+        var d = target - Date.now();
+        if (d < 0){
+            document.getElementById("countdown").innerHTML =
+                '<div class="cell done-note">🎉 Welcome to 2027 — now show what you built.</div>';
+            clearInterval(iv); return;
+        }
+        set("days",   Math.floor(d/day));
+        set("hours",  Math.floor((d%day)/hour));
+        set("minutes",Math.floor((d%hour)/min));
+        set("seconds",Math.floor((d%min)/sec));
+    }
+    function set(id,v){ document.getElementById(id).innerText = String(v).padStart(2,"0"); }
+    tick(); var iv = setInterval(tick, 1000);
+}());
+
+/* ---------- 2. The 30 builds (each finishable in one focused session, hand-typed) ---------- */
+var WEEKS = [
+    { title: "Week 1 · Ship muscle + eval-first reflexes", days: [
+        ["Token & cost visualizer","Paste text → token split + count + $ estimate. Tokenization intuition, ships in an evening."],
+        ["Raw LLM API client","Call the API with plain HTTP + streaming, no SDK. The layer you never wrote by hand."],
+        ["Tool-use loop from scratch","One tool, manual JSON tool-call parsing. This IS an agent — build it without a framework."],
+        ["Structured-output extractor","Prompt → schema-validated JSON with a retry-on-invalid loop."],
+        ["Prompt A/B harness","Run 2 prompts over 10 inputs, diff side-by-side. A baby promptfoo."],
+        ["LLM-as-judge scorer","Score (input,output,rubric) with position-bias handled. Your niche starts here."],
+        ["Golden-set regression gate","20 cases + a script that exits non-zero on regression. Your flagship, in miniature.",1]
+    ]},
+    { title: "Week 2 · Agents & RAG — raw, then named frameworks", days: [
+        ["Router agent from scratch","Classify query → dispatch to 1 of 3 handlers. The Nemo pattern, tiny."],
+        ["ReAct agent from scratch","think → act → observe loop with 2 tools, hand-built."],
+        ["Rebuild the router in LangGraph","Same behaviour, framework vocabulary. Now you can say it in interviews."],
+        ["Rebuild ReAct in LangGraph","State + graph edges. Learn the failure modes seniors get asked about."],
+        ["RAG from scratch","Chunk, embed, cosine search, stuff context. No framework."],
+        ["RAG + reranking","Per-source chunking + a rerank pass — your production pattern, generalized."],
+        ["RAG eval harness","Retrieval precision@k + a faithfulness judge over a golden set.",1]
+    ]},
+    { title: "Week 3 · How the model actually works (Karpathy — every line typed)", days: [
+        ["micrograd","A scalar autograd engine from scratch. Backprop, demystified."],
+        ["MLP on your micrograd","Train a tiny net on toy data using the engine you just wrote."],
+        ["makemore (bigram)","Count-based char-level name generator."],
+        ["makemore (neural)","Same task as a net: softmax + cross-entropy by hand."],
+        ["Self-attention from scratch","One head in NumPy. Explain Q, K, V out loud."],
+        ["Multi-head + transformer block","Stack it into one full block."],
+        ["nanoGPT-tiny + write-up","Train a char GPT on a small corpus; publish a \"what I learned\" post.",1]
+    ]},
+    { title: "Week 4 · Serving, systems, MCP & the flagship", days: [
+        ["Build an MCP server","Expose one real tool. High-scarcity 2026 skill — you use MCP daily, now build one."],
+        ["Run a quantized local model","llama.cpp + a small GGUF on your Mac, wrapped in a CLI. Quantization hands-on."],
+        ["Streaming token API","FastAPI endpoint that streams tokens, Dockerized. The deployment signal."],
+        ["DSA-pattern visualizer","Interactive sliding-window or binary-search demo. A pattern made braggable."],
+        ["SQL job queue (SKIP LOCKED)","Concurrency-safe worker queue — the case-study's concurrency story, generalized."],
+        ["CI gate for prompts","A GitHub Action running Day 7's golden set to block prompt regressions."],
+        ["First open-source PR","A docs fix or small bug in promptfoo / LangGraph / llama.cpp. Done = merged."],
+        ["Sanitized case study","The multi-agent + eval architecture post (fake data). Answers 60% of interview questions."],
+        ["🏁 Flagship: eval-first agent template","Stitch Days 7 + 14 + 27 into one repo with a case-study README.",1]
+    ]}
+];
+// flatten to 30 numbered days
+var BUILDS = [];
+WEEKS.forEach(function(w){ w.days.forEach(function(d){ BUILDS.push({week:w.title, title:d[0], why:d[1], cap:d[2]}); }); });
+
+/* ---------- 3. State (localStorage) ---------- */
+var KEY = "sprint30.v1";
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
+function save(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
+var state = load();
+if (!state.start){ var t=new Date(); t.setHours(0,0,0,0); state.start = t.getTime(); state.checks = {}; save(state); }
+
+var DAY = 864e5;
+function todayIndex(){ return Math.floor((Date.now() - state.start) / DAY); }
+
+/* ---------- 4. Render ---------- */
+function render(){
+    var host = document.getElementById("sprint");
+    host.innerHTML = "";
+    var ti = todayIndex(), i = 0;
+    WEEKS.forEach(function(w){
+        var sec = document.createElement("div"); sec.className="week";
+        sec.innerHTML = '<h3>'+w.title+'</h3>';
+        w.days.forEach(function(){
+            var idx = i, b = BUILDS[idx];
+            var proj = !!state.checks[idx+"p"], brag = !!state.checks[idx+"b"];
+            var date = new Date(state.start + idx*DAY);
+            var row = document.createElement("div");
+            row.className = "day" + (idx===ti?" today":"") + ((proj&&brag)?" done":"");
+            row.innerHTML =
+                '<div class="dnum"><b>'+(idx+1)+'</b><small>'+date.toLocaleDateString(undefined,{month:"short",day:"numeric"})+'</small></div>'+
+                '<div class="dbody"><div class="t">'+(b.cap?'<span class="cap">':'')+b.title+(b.cap?'</span>':'')+
+                    (idx===ti?'<span class="todaytag">Today</span>':'')+'</div>'+
+                    '<div class="why">'+b.why+'</div></div>'+
+                '<div class="checks">'+
+                    '<label class="chk'+(proj?' on':'')+'" data-k="'+idx+'p"><span class="box"></span>Project</label>'+
+                    '<label class="chk'+(brag?' on':'')+'" data-k="'+idx+'b"><span class="box"></span>Brag</label>'+
+                '</div>';
+            sec.appendChild(row); i++;
+        });
+        host.appendChild(sec);
+    });
+    bindChecks(); updateStats();
+}
+function bindChecks(){
+    document.querySelectorAll(".chk").forEach(function(el){
+        el.addEventListener("click", function(){
+            var k = el.getAttribute("data-k");
+            state.checks[k] = !state.checks[k];
+            save(state); render();
+        });
+    });
+}
+function updateStats(){
+    var full=0, proj=0, brag=0;
+    for (var i=0;i<30;i++){
+        var p=!!state.checks[i+"p"], b=!!state.checks[i+"b"];
+        if(p)proj++; if(b)brag++; if(p&&b)full++;
+    }
+    // streak: consecutive fully-done days ending at today (or the last done day)
+    var end = Math.min(todayIndex(), 29), streak=0;
+    for (var j=end;j>=0;j--){ if(state.checks[j+"p"]&&state.checks[j+"b"]) streak++; else break; }
+    document.getElementById("s-days").innerText   = full+"/30";
+    document.getElementById("s-streak").innerText = streak;
+    document.getElementById("s-proj").innerText   = proj;
+    document.getElementById("s-brag").innerText   = brag;
+    document.getElementById("s-bar").style.width  = Math.round((proj+brag)/60*100)+"%";
+}
+document.getElementById("reset").addEventListener("click", function(){
+    if(!confirm("Reset all checkboxes and restart the 30 days from today?")) return;
+    var t=new Date(); t.setHours(0,0,0,0);
+    state = { start:t.getTime(), checks:{} }; save(state); render();
+});
+render();
+</script>
 </body>
 </html>
