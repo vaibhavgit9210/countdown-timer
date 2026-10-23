@@ -156,7 +156,7 @@
         var d = target - Date.now();
         if (d < 0){
             document.getElementById("countdown").innerHTML =
-                '<div class="cell done-note">🎉 Welcome to 2027 — now show what you built.</div>';
+                '<div class="cell done-note">🎉 Welcome to 2027. Now show what you built.</div>';
             clearInterval(iv); return;
         }
         set("days",   Math.floor(d/day));
@@ -173,22 +173,22 @@ var WEEKS = [
     { title: "Week 1 · Ship muscle + eval-first reflexes", days: [
         ["Token & cost visualizer","Paste text → token split + count + $ estimate. Tokenization intuition, ships in an evening."],
         ["Raw LLM API client","Call the API with plain HTTP + streaming, no SDK. The layer you never wrote by hand."],
-        ["Tool-use loop from scratch","One tool, manual JSON tool-call parsing. This IS an agent — build it without a framework."],
+        ["Tool-use loop from scratch","One tool, manual JSON tool-call parsing. This IS an agent. Build it without a framework."],
         ["Structured-output extractor","Prompt → schema-validated JSON with a retry-on-invalid loop."],
         ["Prompt A/B harness","Run 2 prompts over 10 inputs, diff side-by-side. A baby promptfoo."],
         ["LLM-as-judge scorer","Score (input,output,rubric) with position-bias handled. Your niche starts here."],
         ["Golden-set regression gate","20 cases + a script that exits non-zero on regression. Your flagship, in miniature.",1]
     ]},
-    { title: "Week 2 · Agents & RAG — raw, then named frameworks", days: [
+    { title: "Week 2 · Agents & RAG: raw, then named frameworks", days: [
         ["Router agent from scratch","Classify query → dispatch to 1 of 3 handlers. The Nemo pattern, tiny."],
         ["ReAct agent from scratch","think → act → observe loop with 2 tools, hand-built."],
         ["Rebuild the router in LangGraph","Same behaviour, framework vocabulary. Now you can say it in interviews."],
         ["Rebuild ReAct in LangGraph","State + graph edges. Learn the failure modes seniors get asked about."],
         ["RAG from scratch","Chunk, embed, cosine search, stuff context. No framework."],
-        ["RAG + reranking","Per-source chunking + a rerank pass — your production pattern, generalized."],
+        ["RAG + reranking","Per-source chunking + a rerank pass: your production pattern, generalized."],
         ["RAG eval harness","Retrieval precision@k + a faithfulness judge over a golden set.",1]
     ]},
-    { title: "Week 3 · How the model actually works (Karpathy — every line typed)", days: [
+    { title: "Week 3 · How the model actually works (Karpathy, every line typed)", days: [
         ["micrograd","A scalar autograd engine from scratch. Backprop, demystified."],
         ["MLP on your micrograd","Train a tiny net on toy data using the engine you just wrote."],
         ["makemore (bigram)","Count-based char-level name generator."],
@@ -198,11 +198,11 @@ var WEEKS = [
         ["nanoGPT-tiny + write-up","Train a char GPT on a small corpus; publish a \"what I learned\" post.",1]
     ]},
     { title: "Week 4 · Serving, systems, MCP & the flagship", days: [
-        ["Build an MCP server","Expose one real tool. High-scarcity 2026 skill — you use MCP daily, now build one."],
+        ["Build an MCP server","Expose one real tool. High-scarcity 2026 skill: you use MCP daily, now build one."],
         ["Run a quantized local model","llama.cpp + a small GGUF on your Mac, wrapped in a CLI. Quantization hands-on."],
         ["Streaming token API","FastAPI endpoint that streams tokens, Dockerized. The deployment signal."],
         ["DSA-pattern visualizer","Interactive sliding-window or binary-search demo. A pattern made braggable."],
-        ["SQL job queue (SKIP LOCKED)","Concurrency-safe worker queue — the case-study's concurrency story, generalized."],
+        ["SQL job queue (SKIP LOCKED)","Concurrency-safe worker queue: the case-study's concurrency story, generalized."],
         ["CI gate for prompts","A GitHub Action running Day 7's golden set to block prompt regressions."],
         ["First open-source PR","A docs fix or small bug in promptfoo / LangGraph / llama.cpp. Done = merged."],
         ["Sanitized case study","The multi-agent + eval architecture post (fake data). Answers 60% of interview questions."],
@@ -230,7 +230,7 @@ function save(s){
     setStatus("saving…","");
     fetch(DB, { method:"PUT", body: JSON.stringify({ start:s.start, checks:s.checks }) })
         .then(function(r){ if(!r.ok) throw 0; setStatus("✓ synced","ok"); })
-        .catch(function(){ setStatus("⚠ offline — saved on this device","warn"); });
+        .catch(function(){ setStatus("⚠ offline · saved on this device","warn"); });
 }
 
 // pull the cloud copy on load; if it exists it's the source of truth across devices
@@ -249,7 +249,7 @@ fetch(DB)
             render();
         }
     })
-    .catch(function(){ setStatus("⚠ offline — using this device","warn"); });
+    .catch(function(){ setStatus("⚠ offline · using this device","warn"); });
 
 var DAY = 864e5;
 function todayIndex(){ return Math.floor((Date.now() - state.start) / DAY); }
